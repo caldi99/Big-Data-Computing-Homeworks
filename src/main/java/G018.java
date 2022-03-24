@@ -25,7 +25,7 @@ import java.io.IOException;
 
 */
 
-public class G0018 {
+public class G018 {
 
     /**
     Receive as input 3 parameters :
