@@ -32,12 +32,12 @@ import java.util.Map;
 public class G018
 {
     /**
-    Receive as input 3 parameters :
-    K : Number of partitions
-    H : Number of the most popular products
-    S : country (all = all country)
-    File path
-    * */
+     Receive as input 3 parameters :
+     K : Number of partitions
+     H : Number of the most popular products
+     S : country (all = all country)
+     File path
+     * */
     public static void main(String[] args) throws IOException
     {
         if (args.length != 4)
@@ -57,40 +57,40 @@ public class G018
         JavaPairRDD<String, Integer> productCustomer;
 
         productCustomer = rawData.flatMapToPair((document) -> {    // <-- MAP PHASE (R1)
-                    String[] rows = document.split("\r\n"); //righe dataset 8 elementi transactionID  ProductID  Description  Quantity  InvoiceDate  UnitPrice  CustomerID  Country
+            String[] rows = document.split("\r\n"); //righe dataset 8 elementi transactionID  ProductID  Description  Quantity  InvoiceDate  UnitPrice  CustomerID  Country
 
 
-                    //HashMap<String, Integer> counts = new HashMap<>();
-                    HashMap<String, String> counts = new HashMap<>();
+            //HashMap<String, Integer> counts = new HashMap<>();
+            HashMap<String, String> counts = new HashMap<>();
 
-                    for(int i=0; i < rows.length; i++)
+            for(int i=0; i < rows.length; i++)
+            {
+                String[] fields = rows[i].split(",");
+
+                if(S.equals("all"))
+                {
+                    if(Integer.parseInt(fields[3]) > 0 )
                     {
-                        String[] fields = rows[i].split(",");
-
-                        if(S.equals("all"))
-                        {
-                            if(Integer.parseInt(fields[3]) > 0 )
-                            {
-                                counts.put(fields[1]+ ","+ fields[6],"");
-                            }
-                        }else
-                        {
-                            if((Integer.parseInt(fields[3]) > 0 ) && fields[7] == S)
-                                counts.put(fields[1]+ ","+ fields[6],"");
-                        }
+                        counts.put(fields[1]+ ","+ fields[6],"");
                     }
+                }else
+                {
+                    if((Integer.parseInt(fields[3]) > 0 ) && fields[7].equals(S))
+                        counts.put(fields[1]+ ","+ fields[6],"");
+                }
+            }
 
-                    ArrayList<Tuple2<String, Integer>> pairs = new ArrayList<>();
-                    for (Map.Entry<String, String> e : counts.entrySet())
-                    {
-                        String[] x = e.getKey().split(",");
-                        pairs.add(new Tuple2<>(x[0],Integer.parseInt(x[1])));
-                    }
+            ArrayList<Tuple2<String, Integer>> pairs = new ArrayList<>();
+            for (Map.Entry<String, String> e : counts.entrySet())
+            {
+                String[] x = e.getKey().split(",");
+                pairs.add(new Tuple2<>(x[0],Integer.parseInt(x[1])));
+            }
 
-                    return pairs.iterator();
-                });
+            return pairs.iterator();
+        });
         System.out.println("Pippo");
-        System.out.println(productCustomer.count());
-        System.out.println(productCustomer.countByKey());
+        System.out.println("Product customer count:" + productCustomer.count());
+        System.out.println("ProductCustomer countByKey Size:" +  productCustomer.countByKey().size());
     }
 }
