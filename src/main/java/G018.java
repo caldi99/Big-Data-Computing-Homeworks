@@ -2,12 +2,14 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.sources.In;
 import scala.Int;
 import scala.Tuple2;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 /*
     1. Reads the input file into an RDD of strings called rawData (each 8-field row is read as a single string), and subdivides it into K partitions.
@@ -52,45 +54,61 @@ public class G018
         String S = args[2];
         String path = args[3];
 
+
+
+        //task1 : Reads the input file into an RDD of strings called rawData (each 8-field row is read as a single string),
+        // and subdivides it into K partitions, and prints the number of rows read from the input file (i.e., the number of elements of the RDD).
+
+
         JavaRDD<String> rawData = sc.textFile(path).repartition(K).cache();
+        System.out.println("Number of rows : "+ rawData.count());
 
-        JavaPairRDD<String, Integer> productCustomer;
+        //task2 :
+        /*
+        * Transforms rawData into an RDD of (String,Integer) pairs called productCustomer, which contains all distinct pairs (P,C)
+        * such that rawData contains one or more strings whose constituent fields satisfy the following conditions :
+        * ProductID=P and CustomerID=C, Quantity>0, and Country=S. If S="all", no condition on Country is applied. It then prints the number of pairs in the RDD.
+        * IMPORTANT: since the dataset can be potentially very large, the rows relative to a given product P might be too many and you must not gather them together;
+        *  however, you can safely assume that the rows relative to a given product P and a given customer C are not many (say constant number).
+        * Also, although the RDD interface offers a method distinct() to remove duplicates, we ask you to avoid using this method for this step.
+        *
+        TransactionId ProductID Description Quantity InvoiceDate UnitPrice CustomerId Country
+         */
 
-        productCustomer = rawData.flatMapToPair((document) -> {    // <-- MAP PHASE (R1)
-                    String[] rows = document.split("\r\n"); //righe dataset 8 elementi transactionID  ProductID  Description  Quantity  InvoiceDate  UnitPrice  CustomerID  Country
+
+        HashSet<Tuple2<String, Integer>> distinctPairs = new HashSet<>();
+
+        JavaPairRDD<String,Integer> productCustomer;
 
 
-                    //HashMap<String, Integer> counts = new HashMap<>();
-                    HashMap<String, String> counts = new HashMap<>();
+        productCustomer = rawData.flatMapToPair((transaction)->{
+            String[] elements = transaction.split(",");
+            Integer quantity = Integer.parseInt(elements[3]);
+            String city = elements[elements.length-1];
 
-                    for(int i=0; i < rows.length; i++)
+            ArrayList<Tuple2<String,Integer>> list = new ArrayList<>();
+
+            if(quantity > 0)
+            {
+                if(S.equals("all"))//add in any case
+                {
+                    if(!distinctPairs.contains(new Tuple2<>(elements[1],Integer.parseInt(elements[6]))))
                     {
-                        String[] fields = rows[i].split(",");
-
-                        if(S.equals("all"))
-                        {
-                            if(Integer.parseInt(fields[3]) > 0 )
-                            {
-                                counts.put(fields[1]+ ","+ fields[6],"");
-                            }
-                        }else
-                        {
-                            if((Integer.parseInt(fields[3]) > 0 ) && fields[7] == S)
-                                counts.put(fields[1]+ ","+ fields[6],"");
-                        }
+                        distinctPairs.add(new Tuple2<>(elements[1],Integer.parseInt(elements[6])));
+                        list.add(new Tuple2<>(elements[1],Integer.parseInt(elements[6])));
                     }
-
-                    ArrayList<Tuple2<String, Integer>> pairs = new ArrayList<>();
-                    for (Map.Entry<String, String> e : counts.entrySet())
+                }
+                else if(city.equals(S)) // add only if city == S
+                {
+                    if(!distinctPairs.contains(new Tuple2<>(elements[1],Integer.parseInt(elements[6]))))
                     {
-                        String[] x = e.getKey().split(",");
-                        pairs.add(new Tuple2<>(x[0],Integer.parseInt(x[1])));
+                        distinctPairs.add(new Tuple2<>(elements[1],Integer.parseInt(elements[6])));
+                        list.add(new Tuple2<>(elements[1],Integer.parseInt(elements[6])));
                     }
-
-                    return pairs.iterator();
-                });
-        System.out.println("Pippo");
-        System.out.println(productCustomer.count());
-        System.out.println(productCustomer.countByKey());
+                }
+            }
+            return  list.iterator();
+        });
+        System.out.println("Product-Customer Pairs = "+ productCustomer.count());
     }
 }
