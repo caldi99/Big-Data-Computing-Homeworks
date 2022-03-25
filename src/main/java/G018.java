@@ -128,10 +128,7 @@ public class G018
             return tupla;
         });
         System.out.println("Product-Customer Pairs = "+ productCustomer.count());
-        for (Tuple2<String,Integer> e : productCustomer.collect())
-        {
-            System.out.println("Product customer " + e);
-        }
+
 
 
         //task3
@@ -142,6 +139,8 @@ public class G018
         * IMPORTANT: in this case it is safe to assume that the amount of data in a partition is small enough to be gathered together.
         * */
         JavaPairRDD<String,Integer> productPopularity1;
+        //with the use of mapPartitionsToPair :
+
         productPopularity1 = productCustomer.mapPartitionsToPair((it) -> {
             ArrayList<Tuple2<String, Integer>> pairs = new ArrayList<>();
             while(it.hasNext())
@@ -158,11 +157,30 @@ public class G018
             return sum;
         });
 
-
         for (Tuple2<String,Integer> e : productPopularity1.collect())
-        {
             System.out.print("Product : " + e._1() + " Popularity : " + e._2() + " ");
-        }
+
+        System.out.println();
+
+/*
+        //task4
+        /*
+            Repeats the operation of the previous point using a combination of map/mapToPair and reduceByKey methods (instead of mapPartitionsToPair/mapPartitions)
+            and calling the resulting RDD productPopularity2.
+ */
+        JavaPairRDD<String,Integer> productPopularity2;
+        productPopularity2 = productCustomer.mapToPair((it) ->{
+            return new Tuple2<>(it._1(),1);
+        }).groupByKey().mapValues((element)->   {
+            int sum =0;
+            for(int i : element)
+                sum += i;
+            return sum;
+        });
+
+        for (Tuple2<String,Integer> e : productPopularity2.collect())
+            System.out.print("Product : " + e._1() + " Popularity : " + e._2() + " ");
+
 /*
 
 
