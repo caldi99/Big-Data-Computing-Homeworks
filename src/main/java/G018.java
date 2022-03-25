@@ -34,12 +34,12 @@ import java.util.Map;
 public class G018
 {
     /**
-    Receive as input 3 parameters :
-    K : Number of partitions
-    H : Number of the most popular products
-    S : country (all = all country)
-    File path
-    * */
+     Receive as input 3 parameters :
+     K : Number of partitions
+     H : Number of the most popular products
+     S : country (all = all country)
+     File path
+     * */
     public static void main(String[] args) throws IOException
     {
         if (args.length != 4)
@@ -86,8 +86,22 @@ public class G018
             Integer quantity = Integer.parseInt(elements[3]);
             String city = elements[elements.length-1];
 
-            ArrayList<Tuple2<String,Integer>> list = new ArrayList<>();
+            ArrayList<Tuple2<Tuple2<String,Integer>,Integer>> list = new ArrayList<>();
 
+
+            if(quantity > 0)
+            {
+                if(S.equals("all"))
+                {
+                    list.add(new Tuple2<>(new Tuple2<>(elements[1],Integer.parseInt(elements[6])), 0));
+                }else if(city.equals(S))
+                {
+                    list.add(new Tuple2<>(new Tuple2<>(elements[1],Integer.parseInt(elements[6])), 0));
+                }
+            }
+            return list.iterator();
+            /*ArrayList<Tuple2<String,Integer>> list = new ArrayList<>();
+            //System.out.println(quantity);
             if(quantity > 0)
             {
                 if(S.equals("all"))//add in any case
@@ -107,8 +121,74 @@ public class G018
                     }
                 }
             }
-            return  list.iterator();
+            return  list.iterator();*/
+        }).groupByKey().mapToPair((intermediatePair)->{
+            Tuple2<String,Integer> tupla;
+            tupla = new Tuple2<>(intermediatePair._1()._1(),intermediatePair._1()._2());
+            return tupla;
         });
         System.out.println("Product-Customer Pairs = "+ productCustomer.count());
+        for (Tuple2<String,Integer> e : productCustomer.collect())
+        {
+            System.out.println("Product customer " + e);
+        }
+
+
+        //task3
+        /*
+        * Uses the mapPartitionsToPair/mapPartitions method to transform productCustomer into an RDD of (String,Integer)
+        * pairs called productPopularity1 which, for each product ProductID contains one pair (ProductID, Popularity),
+        * where Popularity is the number of distinct customers from Country S (or from all countries if S="all") that purchased a positive quantity of product ProductID.
+        * IMPORTANT: in this case it is safe to assume that the amount of data in a partition is small enough to be gathered together.
+        * */
+        JavaPairRDD<String,Integer> productPopularity1;
+        productPopularity1 = productCustomer.mapPartitionsToPair((it) -> {
+            ArrayList<Tuple2<String, Integer>> pairs = new ArrayList<>();
+            while(it.hasNext())
+            {
+                Tuple2<String,Integer> p = it.next();
+                pairs.add(new Tuple2<String,Integer>(p._1(),1));
+            }
+            return pairs.iterator();
+        }).groupByKey().mapValues((element)->
+        {
+            int sum =0;
+            for(int i : element)
+                sum += i;
+            return sum;
+        });
+
+
+        for (Tuple2<String,Integer> e : productPopularity1.collect())
+        {
+            System.out.print("Product : " + e._1() + " Popularity : " + e._2() + " ");
+        }
+/*
+
+
+        JavaPairRDD<String,Integer> productPopularity1;
+        HashMap<String, Integer> counts = new HashMap<>();
+        productPopularity1 = productCustomer.mapPartitionsToPair((element)->{
+
+            //System.out.println(element._);
+            while (element.hasNext())
+            {
+                Tuple2<String, Integer> tuple = element.next();
+                System.out.println(tuple._1() + " " + tuple._2());
+                counts.put(tuple._1(), 1 + counts.getOrDefault(tuple._1(), 0));
+            }
+            ArrayList<Tuple2<String, Integer>> pairs = new ArrayList<>();
+            for (Map.Entry<String, Integer> e : counts.entrySet())
+            {
+                pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
+            }
+            return pairs.iterator();
+
+        });
+        productPopularity1.count();
+        for (Tuple2<String,Integer> e : productPopularity1.collect())
+        {
+            System.out.println(e);
+        }*/
     }
 }
