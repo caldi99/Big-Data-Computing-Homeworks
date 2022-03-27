@@ -1,3 +1,4 @@
+//package main;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -117,8 +118,8 @@ public class G018
         List<String> mostPop = new ArrayList<>();
         List<Tuple2<String, Integer>> prodPopCollect = productPopularity1.collect();
 
-        for (Tuple2<String, Integer> e : productPopularity2.collect())
-            System.out.print("Product : " + e._1() + " Popularity : " + e._2() + " ");
+        //for (Tuple2<String, Integer> e : productPopularity2.collect())
+        //    System.out.print("Product : " + e._1() + " Popularity : " + e._2() + " ");
         
         //Task 5
         //There is no specific API to sort the data on value (For Java).
@@ -135,21 +136,26 @@ public class G018
         System.out.println("\nMost " + H + " popular products:" + "\n");
         if (H > 0) {
             for (Tuple2<Integer, String> e : swappedPair.sortByKey(false).collect()){
-                if(++i >= H){
+                if(++i >= H+1){
                     break;
                 }else{
-                    System.out.print("Product : " + e._2() + "\n");
+                    System.out.print("Product " + e._2() + " Popularity "+ e._1()+ "; ");
                 }
             }
 
         }
-        //xx
+
+        //TASK 6
+        if (H==0){
+            for (Tuple2<String,Integer> e : productPopularity1.sortByKey().collect())
+                System.out.print("Product : " + e._1() + " Popularity : " + e._2() + "; ");
+            System.out.print("\n");
+            for (Tuple2<String,Integer> e : productPopularity2.sortByKey().collect())
+                System.out.print("Product : " + e._1() + " Popularity : " + e._2() + "; ");
+        }
     }
 
 }
-
-
-
 
 /*
 PER MOSTRARE I RISULTATI
