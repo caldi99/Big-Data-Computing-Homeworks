@@ -136,7 +136,7 @@ public class G018
         System.out.println("\nMost " + H + " popular products:" + "\n");
         if (H > 0) {
             for (Tuple2<Integer, String> e : swappedPair.sortByKey(false).collect()){
-                if(++i >= H+1){
+                if(++i > H){
                     break;
                 }else{
                     System.out.print("Product " + e._2() + " Popularity "+ e._1()+ "; ");
