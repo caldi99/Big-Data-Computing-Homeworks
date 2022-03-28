@@ -122,8 +122,12 @@ public class G018
         //    System.out.print("Product : " + e._1() + " Popularity : " + e._2() + " ");
         
         //Task 5
-        //There is no specific API to sort the data on value (For Java).
-        //Swapping key-value of Product Popularity 1
+
+        // There is no specific API to sort the data on value (For Java).
+
+        // Create a new RDD called "swappedPair"
+        // Swapping key-value of Product Popularity 1
+        // swappedPair keys contains the number of occurrences of the ProductID, which is associated as value
         JavaPairRDD<Integer, String> swappedPair = productPopularity1.mapToPair(new PairFunction<Tuple2<String, Integer>, Integer, String>() {
             @Override
             public Tuple2<Integer, String> call(Tuple2<String, Integer> item) throws Exception {
@@ -131,7 +135,7 @@ public class G018
             }
         });
 
-        //Print of the H most popular products sorting by key
+        //Print of the H most popular products which correspond to the first H elements found using the method sorting by key on swappedPair RDD
         int i = 0;
         System.out.println("\nMost " + H + " popular products:" + "\n");
         if (H > 0) {
@@ -139,7 +143,9 @@ public class G018
                 if(++i > H){
                     break;
                 }else{
-                    System.out.print("Product " + e._2() + " Popularity "+ e._1()+ "; ");
+                    // Print contains H rows of this type:
+                    // Product XXXXX with popularity N
+                    System.out.print("Product " + e._2() + ", with popularity "+ e._1()+ "\n");
                 }
             }
 
