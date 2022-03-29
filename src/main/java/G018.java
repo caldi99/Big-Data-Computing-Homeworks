@@ -1,33 +1,14 @@
+//package main;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import scala.Int;
+import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
-
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-/*
-    1. Reads the input file into an RDD of strings called rawData (each 8-field row is read as a single string), and subdivides it into K partitions.
-    2. Transforms rawData into an RDD of (String,Integer) pairs called productCustomer, which contains all distinct pairs (P,C) such that rawData
-       contains one or more strings whose constituent fields satisfy the following conditions : ProductID=P and CustomerID=C, Quantity>0, and Country=S.
-       If S="all", no condition on Country is applied. IMPORTANT: since the dataset can be potentially very large, the rows relative to a given product P
-       might be too many and you must not gather them together; however, you can safely assume that the rows relative to a given product P and a given customer C
-       are not many (say constant number). Also, although the RDD interface offers a method distinct() to remove duplicates, we ask you to avoid using this method for
-       this step.
-    3. Uses the mapPartitionsToPair/mapPartitions method to transform productCustomer into an RDD of (String,Integer) pairs called productPopularity1 which, for each
-       product ProductID contains one pair (ProductID, Popularity), where Popularity is the number of distinct customers from Country S (or from all countries if S="all")
-       that purchased a positive quantity of product ProductID. IMPORTANT: in this case it is safe to assume that the amount of data in a partition is small enough to be
-       gathered together.
-    4. Repeats the operation of the previous point using a combination of map/mapToPair and reduceByKey methods (instead of mapPartitionsToPair/mapPartitions) and calling
-       the resulting RDD productPopularity2.
-       (This step is executed only if H>0) Saves in a list and prints the ProductID and Popularity of the H products with highest Popularity. Extracts these data from productPopularity1.
-       Since the RDD can be potentially very large you must not spill the entire RDD onto a list and then extract the top-H products. Check the guide Introduction to Programming in Spark
-       to find useful methods to efficiently extract top-valued elements from an RDD.
-       (This step, for debug purposes, is executed only if H=0) Collects all pairs of productPopularity1 into a list and print all of them. Repeats the same thing using productPopularity2.
-*/
+import java.util.List;
+
 
 public class G018
 {
@@ -38,59 +19,136 @@ public class G018
      S : country (all = all country)
      File path
      * */
+
     public static void main(String[] args) throws IOException
     {
         if (args.length != 4)
             throw new IllegalArgumentException("The Number of parameters is not correct");
 
+        //RETRIEVE PARAMETERS
+        int K = Integer.parseInt(args[0]);
+        int H = Integer.parseInt(args[1]);
+        int num_of_product = H;
+        String S = args[2];
+        String path = args[3];
+
+        //SPARK CONFIGURATIONS
         SparkConf conf = new SparkConf(true).setAppName("Homework1");
         JavaSparkContext sc = new JavaSparkContext(conf);
         sc.setLogLevel("WARN");
 
-        int K = Integer.parseInt(args[0]);
-        int H = Integer.parseInt(args[1]);
-        String S = args[2];
-        String path = args[3];
-
+        //TASK 1 :
         JavaRDD<String> rawData = sc.textFile(path).repartition(K).cache();
+        System.out.println("Number of rows : " + rawData.count());
 
+        //TASK 2 :
+		//The idea is to group the elements by couples of ProductID-CustomerID and use as value 0. Then in the next mapping we go back to ProductID-CustomerID key-value pairs
         JavaPairRDD<String, Integer> productCustomer;
+        productCustomer = rawData.
 
-        productCustomer = rawData.flatMapToPair((document) -> {    // <-- MAP PHASE (R1)
-            String[] rows = document.split("\r\n"); //righe dataset 8 elementi transactionID  ProductID  Description  Quantity  InvoiceDate  UnitPrice  CustomerID  Country
+                flatMapToPair(
+                        (transaction) ->
+                        {
+                            String[] elements = transaction.split(",");
+                            Integer quantity = Integer.parseInt(elements[3]);
+                            String city = elements[elements.length - 1];
+                            ArrayList<Tuple2<Tuple2<String, Integer>, Integer>> list = new ArrayList<>();
+                            if (quantity > 0) {
+                                if (S.equals("all"))
+                                    list.add(new Tuple2<>(new Tuple2<>(elements[1], Integer.parseInt(elements[6])), 0));
+                                else if (city.equals(S))
+                                    list.add(new Tuple2<>(new Tuple2<>(elements[1], Integer.parseInt(elements[6])), 0));
+                            }
+                            return list.iterator();
+                        })
 
+                .groupByKey()
 
-            //HashMap<String, Integer> counts = new HashMap<>();
-            HashMap<String, String> counts = new HashMap<>();
+                .mapToPair((intermediatePair) -> new Tuple2<>(intermediatePair._1()._1(), intermediatePair._1()._2()));
 
-            for(int i=0; i < rows.length; i++)
-            {
-                String[] fields = rows[i].split(",");
+        System.out.println("Product-Customer Pairs = " + productCustomer.count());
 
-                if(S.equals("all"))
+        //TASK 3
+        JavaPairRDD<String, Integer> productPopularity1;
+
+        productPopularity1 = productCustomer.
+
+                mapPartitionsToPair((it) ->
                 {
-                    if(Integer.parseInt(fields[3]) > 0 )
-                    {
-                        counts.put(fields[1]+ ","+ fields[6],"");
+                    ArrayList<Tuple2<String, Integer>> pairs = new ArrayList<>();
+                    while (it.hasNext()) {
+                        Tuple2<String, Integer> p = it.next();
+                        pairs.add(new Tuple2<String, Integer>(p._1(), 1));
                     }
-                }else
+                    return pairs.iterator();
+                }).
+
+                groupByKey().
+
+                mapValues((element) ->
                 {
-                    if((Integer.parseInt(fields[3]) > 0 ) && fields[7].equals(S))
-                        counts.put(fields[1]+ ","+ fields[6],"");
+                    int sum = 0;
+                    for (int i : element)
+                        sum += i;
+                    return sum;
+                });
+
+        //TASK 4
+
+        JavaPairRDD<String, Integer> productPopularity2;
+        productPopularity2 = productCustomer.
+
+                mapToPair((it) -> new Tuple2<>(it._1(), 1)).
+
+                reduceByKey((x, y) -> x+y);            
+
+
+        //List to populate with the H most popular products
+        List<String> mostPop = new ArrayList<>();
+        List<Tuple2<String, Integer>> prodPopCollect = productPopularity1.collect();
+
+        //for (Tuple2<String, Integer> e : productPopularity2.collect())
+        //    System.out.print("Product : " + e._1() + " Popularity : " + e._2() + " ");
+        
+        //Task 5
+
+        // There is no specific API to sort the data on value (For Java).
+
+        // Create a new RDD called "swappedPair"
+        // Swapping key-value of Product Popularity 1
+        // swappedPair keys contains the number of occurrences of the ProductID, which is associated as value
+        JavaPairRDD<Integer, String> swappedPair = productPopularity1.mapToPair(new PairFunction<Tuple2<String, Integer>, Integer, String>() {
+            @Override
+            public Tuple2<Integer, String> call(Tuple2<String, Integer> item) throws Exception {
+                return item.swap();
+            }
+        });
+
+        //Print of the H most popular products which correspond to the first H elements found using the method sorting by key on swappedPair RDD
+        int i = 0;
+        System.out.println("\nMost " + H + " popular products:" + "\n");
+        if (H > 0) {
+            for (Tuple2<Integer, String> e : swappedPair.sortByKey(false).collect()){
+                if(++i > H){
+                    break;
+                }else{
+                    // Print contains H rows of this type:
+                    // Product XXXXX with popularity N
+                    System.out.print("Product " + e._2() + ", with popularity "+ e._1()+ "\n");
                 }
             }
 
-            ArrayList<Tuple2<String, Integer>> pairs = new ArrayList<>();
-            for (Map.Entry<String, String> e : counts.entrySet())
-            {
-                String[] x = e.getKey().split(",");
-                pairs.add(new Tuple2<>(x[0],Integer.parseInt(x[1])));
-            }
+        }
 
-            return pairs.iterator();
-        });
-        System.out.println("Pippo");
-        System.out.println("Product customer count:" + productCustomer.count());
-        System.out.println("ProductCustomer countByKey Size:" +  productCustomer.countByKey().size());
+        //TASK 6
+        if (H==0){
+            for (Tuple2<String,Integer> e : productPopularity1.sortByKey().collect())
+                System.out.print("Product : " + e._1() + " Popularity : " + e._2() + "; ");
+            System.out.print("\n");
+            for (Tuple2<String,Integer> e : productPopularity2.sortByKey().collect())
+                System.out.print("Product : " + e._1() + " Popularity : " + e._2() + "; ");
+        }
+
     }
+
 }
