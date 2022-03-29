@@ -5,14 +5,10 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
-import shapeless.Tuple;
-
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
+
 
 public class G018
 {
@@ -46,6 +42,7 @@ public class G018
         System.out.println("Number of rows : " + rawData.count());
 
         //TASK 2 :
+		//The idea is to group the elements by couples of ProductID-CustomerID and use as value 0. Then in the next mapping we go back to ProductID-CustomerID key-value pairs
         JavaPairRDD<String, Integer> productCustomer;
         productCustomer = rawData.
 
@@ -103,15 +100,7 @@ public class G018
 
                 mapToPair((it) -> new Tuple2<>(it._1(), 1)).
 
-                groupByKey().
-
-                mapValues((element) ->
-                {
-                    int sum = 0;
-                    for (int i : element)
-                        sum += i;
-                    return sum;
-                });
+                reduceByKey((x, y) -> x+y);            
 
 
         //List to populate with the H most popular products
