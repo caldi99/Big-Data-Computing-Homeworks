@@ -7,7 +7,6 @@ import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 
 public class G018
@@ -28,7 +27,6 @@ public class G018
         //RETRIEVE PARAMETERS
         int K = Integer.parseInt(args[0]);
         int H = Integer.parseInt(args[1]);
-        int num_of_product = H;
         String S = args[2];
         String path = args[3];
 
@@ -102,14 +100,6 @@ public class G018
 
                 reduceByKey((x, y) -> x+y);            
 
-
-        //List to populate with the H most popular products
-        List<String> mostPop = new ArrayList<>();
-        List<Tuple2<String, Integer>> prodPopCollect = productPopularity1.collect();
-
-        //for (Tuple2<String, Integer> e : productPopularity2.collect())
-        //    System.out.print("Product : " + e._1() + " Popularity : " + e._2() + " ");
-        
         //Task 5
 
         // There is no specific API to sort the data on value (For Java).
@@ -137,7 +127,6 @@ public class G018
                     System.out.print("Product " + e._2() + ", with popularity "+ e._1()+ "\n");
                 }
             }
-
         }
 
         //TASK 6
