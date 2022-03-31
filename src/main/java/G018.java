@@ -8,7 +8,12 @@ import scala.Tuple2;
 import java.io.IOException;
 import java.util.ArrayList;
 
-
+/*
+	This project was carried out by :
+	Daniela Cuza
+	Simone D'antimo
+	Francesco Caldivezzi
+*/
 public class G018
 {
     /**
@@ -51,22 +56,23 @@ public class G018
                             Integer quantity = Integer.parseInt(elements[3]);
                             String city = elements[elements.length - 1];
                             ArrayList<Tuple2<Tuple2<String, Integer>, Integer>> list = new ArrayList<>();
-                            if (quantity > 0) {
-                                if (S.equals("all"))
+                            if (quantity > 0) { //check if quantity is > 0
+                                if (S.equals("all")) //check if S is equal to all
                                     list.add(new Tuple2<>(new Tuple2<>(elements[1], Integer.parseInt(elements[6])), 0));
-                                else if (city.equals(S))
+                                else if (city.equals(S)) //check if city is equal to S
                                     list.add(new Tuple2<>(new Tuple2<>(elements[1], Integer.parseInt(elements[6])), 0));
                             }
                             return list.iterator();
                         })
 
-                .groupByKey()
+                .groupByKey() // group by ProductID-CustomerID
 
-                .mapToPair((intermediatePair) -> new Tuple2<>(intermediatePair._1()._1(), intermediatePair._1()._2()));
+                .mapToPair((intermediatePair) -> new Tuple2<>(intermediatePair._1()._1(), intermediatePair._1()._2())); // go back to ProductID-CustomerID as key and value respectively
 
         System.out.println("Product-Customer Pairs = " + productCustomer.count());
 
         //TASK 3
+		//The idea in this case is for each Product-ID add a pair ProductID-1
         JavaPairRDD<String, Integer> productPopularity1;
 
         productPopularity1 = productCustomer.
@@ -89,10 +95,10 @@ public class G018
                     for (int i : element)
                         sum += i;
                     return sum;
-                });
+                }); // sum all the 1s that correspond to one ProductID
 
         //TASK 4
-
+		//The idea is the same as in TASK 4 but without the use of mapPartitionsToPair
         JavaPairRDD<String, Integer> productPopularity2;
         productPopularity2 = productCustomer.
 
@@ -130,6 +136,7 @@ public class G018
         }
 
         //TASK 6
+		//Here we print all the pairs in increasing lexicographic order of Product-ID both for productPopularity1 and productPopularity2
         if (H==0){
             for (Tuple2<String,Integer> e : productPopularity1.sortByKey().collect())
                 System.out.print("Product : " + e._1() + " Popularity : " + e._2() + "; ");
