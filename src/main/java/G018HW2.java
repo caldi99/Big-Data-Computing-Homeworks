@@ -3,13 +3,59 @@ import  org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.mllib.*;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import static java.lang.Math.sqrt;
 
 public class G018HW2 {
+
+    public static Vector strToVector(String str) {
+        String[] tokens = str.split(",");
+        double[] data = new double[tokens.length];
+        for (int i=0; i<tokens.length; i++) {
+            data[i] = Double.parseDouble(tokens[i]);
+        }
+        return Vectors.dense(data);
+    }
+
+
+    public static ArrayList<Vector> readVectorsSeq(String filename) throws IOException {
+        if (Files.isDirectory(Paths.get(filename))) {
+            throw new IllegalArgumentException("readVectorsSeq is meant to read a single file.");
+        }
+        ArrayList<Vector> result = new ArrayList<>();
+        Files.lines(Paths.get(filename))
+                .map(str -> strToVector(str))
+                .forEach(e -> result.add(e));
+        return result;
+    }
+
+
+    public static void main(String[] args) throws  IOException
+    {
+        ArrayList<Vector> inputPoints = readVectorsSeq(args[0]);
+        int k = Integer.parseInt(args[1]);
+        int z = Integer.parseInt(args[2]);
+
+        ArrayList<Long> weights  = new ArrayList<>(inputPoints.size());
+
+        for(int i=0; i< inputPoints.size(); i++)
+            weights.add(1L);
+
+        ArrayList<Vector> solution =  SeqWeightedOutliers(inputPoints,weights,k,z,0);
+
+        double objective = ComputeObjective(inputPoints,solution,z);
+
+        /* //TODO:
+        * Return as output the following quantities: |P|, k, z, the initial guess made by SeqWeightedOutliers(inputPoints,weights,k,z,0), the value objective, and the time (in milliseconds)
+        * required by the execution of SeqWeightedOutliers(inputPoints,weights,k,z,0). IT IS IMPORTANT THAT ALL PROGRAMS USE THE SAME OUTPUT FORMAT AS IN THE FOLLOWING EXAMPLE: link to be added
+        * */
+    }
 
 
     /**
@@ -85,7 +131,7 @@ public class G018HW2 {
         return Bz;
     }
 
-    public double ComputeObjective(ArrayList<Vector> P, ArrayList<Vector> S, int z)
+    public static double ComputeObjective(ArrayList<Vector> P, ArrayList<Vector> S, int z)
     {
         double[] distances = new double[P.size()];
 
@@ -112,7 +158,7 @@ public class G018HW2 {
         return 0;
     }
 
-    private double computeDistance(Vector point, ArrayList<Vector> S){
+    private static double computeDistance(Vector point, ArrayList<Vector> S){
 
         double min_distance = -1;
         double actual_distance = 0;
