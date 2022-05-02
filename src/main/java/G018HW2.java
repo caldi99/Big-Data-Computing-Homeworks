@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,7 +28,6 @@ public class G018HW2 {
         return Vectors.dense(data);
     }
 
-
     public static ArrayList<Vector> readVectorsSeq(String filename) throws IOException {
         if (Files.isDirectory(Paths.get(filename))) {
             throw new IllegalArgumentException("readVectorsSeq is meant to read a single file.");
@@ -40,22 +40,23 @@ public class G018HW2 {
     }
 
 
-
-    static Double[][] distances = null;
+    static HashMap<Tuple2<Vector, Vector>,Double> distances = null;
 
     public static void main(String[] args) throws  IOException
     {
         ArrayList<Vector> inputPoints = readVectorsSeq(args[0]);
 
-        distances = precomputeDistances(inputPoints);
 
         int k = Integer.parseInt(args[1]);
         int z = Integer.parseInt(args[2]);
 
-        ArrayList<Long> weights  = new ArrayList<>(inputPoints.size());
+        initDistances(inputPoints);
 
+
+        ArrayList<Long> weights  = new ArrayList<>(inputPoints.size());
         for(int i=0; i< inputPoints.size(); i++)
             weights.add(1L);
+
 
         Long startingTime = System.currentTimeMillis();
 
@@ -65,10 +66,6 @@ public class G018HW2 {
 
         double objective = ComputeObjective(inputPoints,solution,z);
 
-        /* //TODO:
-        * Return as output the following quantities: |P|, k, z, the initial guess made by SeqWeightedOutliers(inputPoints,weights,k,z,0), the value objective, and the time (in milliseconds)
-        * required by the execution of SeqWeightedOutliers(inputPoints,weights,k,z,0). IT IS IMPORTANT THAT ALL PROGRAMS USE THE SAME OUTPUT FORMAT AS IN THE FOLLOWING EXAMPLE: link to be added
-        * */
 
         System.out.println("Input size n = "+ inputPoints.size()); // |P|
         System.out.println("Number of centers k = " + k); //k
@@ -81,41 +78,31 @@ public class G018HW2 {
     }
 
 
-    public static Double[][] precomputeDistances(ArrayList<Vector> P)
+    public static void initDistances(ArrayList<Vector> initialPoints)
     {
-        Double[][] ret = new Double[P.size()][P.size()];
-        for(int i=0; i< P.size(); i++)
-        {
-            ret[i][i] = 0.0;
+        distances = new HashMap<>(initialPoints.size());
 
-        }
-
-        for(int i=0; i<P.size(); i++)
+        for(int i=0; i<initialPoints.size(); i++)
         {
-            for(int j=i+1; j<P.size(); j++)
+            for(int j=i+1; j< initialPoints.size(); j++)
             {
-                ret[i][j] = Math.sqrt(Vectors.sqdist(P.get(i),P.get(j)));
-                //if(i!= j) //better top rigth matrix
-
-            }
-
-        }
-        for(int i=0; i<P.size(); i++)
-        {
-            for (int j = i + 1; j < P.size(); j++)
-            {
-                ret[j][i] = ret[i][j];
+                distances.put(new Tuple2<>(initialPoints.get(i),initialPoints.get(j)),Math.sqrt(Vectors.sqdist(initialPoints.get(i),initialPoints.get(j))));
             }
         }
 
+        for(int i=0; i<initialPoints.size(); i++)
+        {
+            distances.put(new Tuple2<>(initialPoints.get(i),initialPoints.get(i)),0.0);
+        }
 
-        return ret;
-
-
-
-
+        for(int i=0; i<initialPoints.size(); i++)
+        {
+            for(int j=i+1; j< initialPoints.size(); j++)
+            {
+                distances.put(new Tuple2<>(initialPoints.get(j),initialPoints.get(i)),distances.get(new Tuple2<>(initialPoints.get(i),initialPoints.get(j))));
+            }
+        }
     }
-
 
     /**
      * z ?? type ??
@@ -138,11 +125,6 @@ public class G018HW2 {
 
         // Need to precompute the distances
 
-
-
-
-
-
         while (true)
         {
             S = new ArrayList<>(); // S = empty
@@ -159,7 +141,7 @@ public class G018HW2 {
                 for (Vector x: P)
                 {
                     Long ball_weigth = 0L;
-                    ArrayList<Vector> vector1 = Bz(Z,x,(1 + 2 * alpha)*r,P);
+                    ArrayList<Vector> vector1 = Bz(Z,x,(1 + 2 * alpha)*r);
 
                     for (Vector y : vector1)
                         ball_weigth += W.get(P.indexOf(y));
@@ -169,23 +151,20 @@ public class G018HW2 {
                         new_center = x;
                     }
                 }
-
                 S.add(new_center);
-
-                ArrayList<Vector> vector = Bz(Z,new_center,(3+ 4 * alpha)*r,P);
+                ArrayList<Vector> vector = Bz(Z,new_center,(3+ 4 * alpha)*r);
                 for (Vector y: vector)
                 {
                     Z.remove(y);
                     Wz-= W.get(P.indexOf(y));
                 }
             }
-            System.out.println("Iterazione : "+guess);
+
             if(Wz <= z)
             {
                 System.out.println("R : "+r);
                 System.out.println("GUESS : "+guess);
                 return S;
-
             }
             else
             {
@@ -210,7 +189,7 @@ public class G018HW2 {
         return min;
     }
 
-    private static ArrayList<Vector> Bz(ArrayList<Vector> Z,Vector x, double r,ArrayList<Vector> P)
+    private static ArrayList<Vector> Bz(ArrayList<Vector> Z,Vector x, double r)
     {
         ArrayList<Vector> Bz = new ArrayList<>();
         /*for (Vector y:Z)
@@ -219,14 +198,11 @@ public class G018HW2 {
                 Bz.add(y);
         }*/
 
-        for (Vector y: P )
+        for (Vector y : Z)
         {
-            if(distances[P.indexOf(x)][P.indexOf(y)] <= r)
-            {
+            if(distances.get(new Tuple2<>(x,y)) <= r)
                 Bz.add(y);
-            }
         }
-
 
         return Bz;
     }
