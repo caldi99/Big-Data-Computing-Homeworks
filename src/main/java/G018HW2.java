@@ -47,14 +47,25 @@ public class G018HW2 {
         for(int i=0; i< inputPoints.size(); i++)
             weights.add(1L);
 
+        long startTime = System.nanoTime();
         ArrayList<Vector> solution =  SeqWeightedOutliers(inputPoints,weights,k,z,0);
-
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime) / 1000000;
         double objective = ComputeObjective(inputPoints,solution,z);
 
         /* //TODO:
         * Return as output the following quantities: |P|, k, z, the initial guess made by SeqWeightedOutliers(inputPoints,weights,k,z,0), the value objective, and the time (in milliseconds)
         * required by the execution of SeqWeightedOutliers(inputPoints,weights,k,z,0). IT IS IMPORTANT THAT ALL PROGRAMS USE THE SAME OUTPUT FORMAT AS IN THE FOLLOWING EXAMPLE: link to be added
         * */
+        System.out.print("Input size n = " + inputPoints.size() + "\n");
+        System.out.print("Number of centers k = " + k + "\n");
+        System.out.print("Number of outliers z = " + z + "\n");
+        //System.out.print("Initial guess = " + z + "\n");
+        //System.out.print("Final guess = " + z + "\n");
+        //System.out.print("Number of guesses = " + z + "\n");
+        System.out.print("Objective function = " + objective + "\n");
+        System.out.print("Time of SeqWeightedOutliers = " + duration + "\n");
+
     }
 
 
@@ -66,8 +77,9 @@ public class G018HW2 {
     public static  ArrayList<Vector> SeqWeightedOutliers(ArrayList<Vector> P, ArrayList<Long> W, int k, int z, int alpha )
     {
         ArrayList<Vector> S = null;
-        double r = minDistance(P,k+z+1);
-
+        double r = minDistance(P,k+z+1)/2;  // nella precedente versione non c'era il fratto 2
+        System.out.print("Initial guess = " + r + "\n");
+        int itera = 1;
         while (true)
         {
             S = new ArrayList<>(); // S = empty
@@ -98,11 +110,16 @@ public class G018HW2 {
                     Wz-= W.get(P.indexOf(y));
                 }
             }
-            if(Wz <= z)
+            if(Wz <= z) {
                 return S;
-            else
-                r*= 2;
+            }
+            else {
+                r *= 2;
+                itera = itera + 1;
+            }
+
         }
+
     }
 
     private static double minDistance(ArrayList<Vector> points, long numberOfPoints )
@@ -143,7 +160,7 @@ public class G018HW2 {
 
         //If we want to return the largest distance excluding z
 
-        //return distances[distances.length - z - 1];
+        return distances[distances.length - z - 1];
 
         //Return the sum of all distances excluding Z set :
 
@@ -155,7 +172,7 @@ public class G018HW2 {
         */
 
         //This return must be eliminated, but before we must decide which return we want to use
-        return 0;
+        //return 0;
     }
 
     private static double computeDistance(Vector point, ArrayList<Vector> S){
