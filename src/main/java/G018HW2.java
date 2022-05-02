@@ -40,7 +40,7 @@ public class G018HW2 {
     }
 
 
-    static HashMap<Tuple2<Vector, Vector>,Double> distances = null;
+    //static HashMap<Tuple2<Vector, Vector>,Double> distances = null;
 
     static Double[][] distancesMatrix = null;
     static Boolean[][] availbleToUse = null;
@@ -49,12 +49,10 @@ public class G018HW2 {
     public static void main(String[] args) throws  IOException
     {
         ArrayList<Vector> inputPoints = readVectorsSeq(args[0]);
-
-
         int k = Integer.parseInt(args[1]);
         int z = Integer.parseInt(args[2]);
 
-        //initDistances(inputPoints);
+        initDistances(inputPoints);
 
 
         ArrayList<Long> weights  = new ArrayList<>(inputPoints.size());
@@ -94,6 +92,8 @@ public class G018HW2 {
 
     }
 
+    // 0      1     2
+    // [2,2] [3,4] [3,3]
 
     public static void initDistances(ArrayList<Vector> initialPoints)
     {
@@ -151,12 +151,14 @@ public class G018HW2 {
         {
             S = new ArrayList<>(); // S = empty
             Z = new ArrayList<>(P); // Z = P
-            //initAvailableToUse(P);
+            initAvailableToUse(P);
 
 
             Wz = 0L;
-            for (Long element: W) //Wz = sun x \in P (w(x))
-                Wz += element;
+            //for (Long element: W) //Wz = sun x \in P (w(x))
+            //    Wz += element;
+
+            Wz += W.size();
 
             while ((S.size() < k) && (Wz > 0))
             {
@@ -167,9 +169,12 @@ public class G018HW2 {
                     Long ball_weigth = 0L;
                     //ArrayList<Vector> vector1 = Bz(Z,x,(1 + 2 * alpha)*r);
 
-                    ArrayList<Vector> vector1 = Bz(Z,x,(1 + 2 * alpha)*r);
-                    for (Vector y : vector1)
-                        ball_weigth += W.get(P.indexOf(y));
+                    ArrayList<Vector> vector1 = Bz(P,x,(1 + 2 * alpha)*r);
+                    //for (Vector y : vector1)
+                    //    ball_weigth += W.get(P.indexOf(y));
+
+                    ball_weigth += vector1.size();
+
                     if(ball_weigth > max)
                     {
                         max = ball_weigth;
@@ -178,7 +183,7 @@ public class G018HW2 {
                 }
                 S.add(new_center);
                 //ArrayList<Vector> vector = Bz(Z,new_center,(3+ 4 * alpha)*r);
-                ArrayList<Vector> vector = Bz(Z,new_center,(3+ 4 * alpha)*r);
+                ArrayList<Vector> vector = Bz(P,new_center,(3+ 4 * alpha)*r);
 
                 for (Vector y: vector)
                 {
@@ -187,11 +192,11 @@ public class G018HW2 {
 
                     Wz-= W.get(indexY);
 
-                    /*for(int i=0; i<P.size(); i++)
+                    for(int i=0; i<P.size(); i++)
                     {
                         availbleToUse[i][indexY] = false;
                         availbleToUse[indexY][i] = false;
-                    }*/
+                    }
 
                 }
             }
@@ -225,14 +230,14 @@ public class G018HW2 {
         return min;
     }
 
-    private static ArrayList<Vector> Bz(ArrayList<Vector> Z,Vector x, double r)
+    private static ArrayList<Vector> Bz(ArrayList<Vector> P,Vector x, double r)
     {
         ArrayList<Vector> Bz = new ArrayList<>();
-        for (Vector y:Z)
+        /*for (Vector y:P)
         {
             if(Math.sqrt(Vectors.sqdist(x, y)) <= r)
                 Bz.add(y);
-        }
+        }*/
 
         /*for (Vector y : Z)
         {
@@ -240,10 +245,10 @@ public class G018HW2 {
                 Bz.add(y);
         }*/
 
-        /*int indexX = P.indexOf(x);
+        int indexX = P.indexOf(x);
         for(int i=0; i< P.size(); i++)
             if((distancesMatrix[indexX][i] <= r) && availbleToUse[indexX][i])
-                Bz.add(P.get(i));*/
+                Bz.add(P.get(i));
 
 
         return Bz;
