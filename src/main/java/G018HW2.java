@@ -42,6 +42,10 @@ public class G018HW2 {
 
     static HashMap<Tuple2<Vector, Vector>,Double> distances = null;
 
+    static Double[][] distancesMatrix = null;
+    static Boolean[][] availbleToUse = null;
+
+
     public static void main(String[] args) throws  IOException
     {
         ArrayList<Vector> inputPoints = readVectorsSeq(args[0]);
@@ -50,7 +54,7 @@ public class G018HW2 {
         int k = Integer.parseInt(args[1]);
         int z = Integer.parseInt(args[2]);
 
-        initDistances(inputPoints);
+        //initDistances(inputPoints);
 
 
         ArrayList<Long> weights  = new ArrayList<>(inputPoints.size());
@@ -77,29 +81,47 @@ public class G018HW2 {
         System.out.println("Time of SeqWeightedOutliers = "+ (finishingTime-startingTime)); //time required in which format?? milliseconds??
     }
 
+    public static void initAvailableToUse(ArrayList<Vector> initialPoints)
+    {
+        availbleToUse = new Boolean[initialPoints.size()][initialPoints.size()];
+
+        for(int i=0; i< initialPoints.size(); i++)
+            for(int j=0; j<initialPoints.size(); j++)
+            {
+                availbleToUse[i][j] = true;
+
+            }
+
+    }
+
 
     public static void initDistances(ArrayList<Vector> initialPoints)
     {
-        distances = new HashMap<>(initialPoints.size());
+        //distances = new HashMap<>(initialPoints.size());
+
+        distancesMatrix = new Double[initialPoints.size()][initialPoints.size()];
 
         for(int i=0; i<initialPoints.size(); i++)
         {
             for(int j=i+1; j< initialPoints.size(); j++)
             {
-                distances.put(new Tuple2<>(initialPoints.get(i),initialPoints.get(j)),Math.sqrt(Vectors.sqdist(initialPoints.get(i),initialPoints.get(j))));
+                distancesMatrix[i][j] = Math.sqrt(Vectors.sqdist(initialPoints.get(i),initialPoints.get(j)));
+                //distances.put(new Tuple2<>(initialPoints.get(i),initialPoints.get(j)),Math.sqrt(Vectors.sqdist(initialPoints.get(i),initialPoints.get(j))));
             }
         }
 
         for(int i=0; i<initialPoints.size(); i++)
         {
-            distances.put(new Tuple2<>(initialPoints.get(i),initialPoints.get(i)),0.0);
+            distancesMatrix[i][i]= 0.0;
+            //distances.put(new Tuple2<>(initialPoints.get(i),initialPoints.get(i)),0.0);
         }
 
         for(int i=0; i<initialPoints.size(); i++)
         {
             for(int j=i+1; j< initialPoints.size(); j++)
             {
-                distances.put(new Tuple2<>(initialPoints.get(j),initialPoints.get(i)),distances.get(new Tuple2<>(initialPoints.get(i),initialPoints.get(j))));
+                distancesMatrix[j][i] = distancesMatrix[i][j];
+                //distances.put(new Tuple2<>(initialPoints.get(j),initialPoints.get(i)),distances.get(new Tuple2<>(initialPoints.get(i),initialPoints.get(j))));
             }
         }
     }
@@ -129,6 +151,8 @@ public class G018HW2 {
         {
             S = new ArrayList<>(); // S = empty
             Z = new ArrayList<>(P); // Z = P
+            //initAvailableToUse(P);
+
 
             Wz = 0L;
             for (Long element: W) //Wz = sun x \in P (w(x))
@@ -141,8 +165,9 @@ public class G018HW2 {
                 for (Vector x: P)
                 {
                     Long ball_weigth = 0L;
-                    ArrayList<Vector> vector1 = Bz(Z,x,(1 + 2 * alpha)*r);
+                    //ArrayList<Vector> vector1 = Bz(Z,x,(1 + 2 * alpha)*r);
 
+                    ArrayList<Vector> vector1 = Bz(Z,x,(1 + 2 * alpha)*r);
                     for (Vector y : vector1)
                         ball_weigth += W.get(P.indexOf(y));
                     if(ball_weigth > max)
@@ -152,11 +177,22 @@ public class G018HW2 {
                     }
                 }
                 S.add(new_center);
+                //ArrayList<Vector> vector = Bz(Z,new_center,(3+ 4 * alpha)*r);
                 ArrayList<Vector> vector = Bz(Z,new_center,(3+ 4 * alpha)*r);
+
                 for (Vector y: vector)
                 {
                     Z.remove(y);
-                    Wz-= W.get(P.indexOf(y));
+                    int indexY = P.indexOf(y);
+
+                    Wz-= W.get(indexY);
+
+                    /*for(int i=0; i<P.size(); i++)
+                    {
+                        availbleToUse[i][indexY] = false;
+                        availbleToUse[indexY][i] = false;
+                    }*/
+
                 }
             }
 
@@ -192,17 +228,23 @@ public class G018HW2 {
     private static ArrayList<Vector> Bz(ArrayList<Vector> Z,Vector x, double r)
     {
         ArrayList<Vector> Bz = new ArrayList<>();
-        /*for (Vector y:Z)
+        for (Vector y:Z)
         {
             if(Math.sqrt(Vectors.sqdist(x, y)) <= r)
                 Bz.add(y);
-        }*/
+        }
 
-        for (Vector y : Z)
+        /*for (Vector y : Z)
         {
             if(distances.get(new Tuple2<>(x,y)) <= r)
                 Bz.add(y);
-        }
+        }*/
+
+        /*int indexX = P.indexOf(x);
+        for(int i=0; i< P.size(); i++)
+            if((distancesMatrix[indexX][i] <= r) && availbleToUse[indexX][i])
+                Bz.add(P.get(i));*/
+
 
         return Bz;
     }
