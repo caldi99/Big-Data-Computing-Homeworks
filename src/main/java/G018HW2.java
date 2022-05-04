@@ -97,10 +97,10 @@ public class G018HW2 {
             P.toArray(Z);
 
             Wz = 0L;
-            //for (Long element: W) //Wz = sun x \in P (w(x))
-            //    Wz += element;
+            for (Long element: W) //Wz = sun x \in P (w(x))
+                Wz += element;
 
-            Wz += W.size();
+            //Wz += W.size();
 
             while ((S.size() < k) && (Wz > 0))
             {
@@ -109,11 +109,12 @@ public class G018HW2 {
                 for (Vector x: P)
                 {
                     long ball_weigth = 0L;
-                    ArrayList<Integer> vector1 = Bz(P,Z,x,(1 + 2 * alpha)*r);
-                    //for (Vector y : vector1)
-                    //    ball_weigth += W.get(P.get(y));
+                    ArrayList<Integer> vector1 = Bz(P,Z,x,(1 + 2 * alpha)*r); //index of where it is in P
 
-                    ball_weigth += vector1.size();
+                    for (Integer y : vector1)
+                       ball_weigth += W.get(y);
+
+                    //ball_weigth += vector1.size();
 
                     if(ball_weigth > max)
                     {
