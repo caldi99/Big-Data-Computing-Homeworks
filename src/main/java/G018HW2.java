@@ -18,6 +18,7 @@ import java.util.Arrays;
 
 public class G018HW2 {
 
+    //Method to read input number 1
     public static Vector strToVector(String str) {
         String[] tokens = str.split(",");
         double[] data = new double[tokens.length];
@@ -27,6 +28,7 @@ public class G018HW2 {
         return Vectors.dense(data);
     }
 
+    //Method to read input number 2
     public static ArrayList<Vector> readVectorsSeq(String filename) throws IOException {
         if (Files.isDirectory(Paths.get(filename))) {
             throw new IllegalArgumentException("readVectorsSeq is meant to read a single file.");
@@ -54,7 +56,7 @@ public class G018HW2 {
         System.out.println("Input size n = "+ inputPoints.size());
         System.out.println("Number of centers k = " + k);
         System.out.println("Number of outliers z = " + z);
-        System.out.println("Initial guess = "+ minDistance(inputPoints,k+z+1)/2);
+        System.out.println("Initial guess = "+ minDistance(k+z+1)/2);
 
         Long startingTime = System.currentTimeMillis();
         ArrayList<Vector> solution =  SeqWeightedOutliers(inputPoints,weights,k,z,0);
@@ -65,6 +67,7 @@ public class G018HW2 {
         System.out.println("Time of SeqWeightedOutliers = "+ (finishingTime-startingTime)); //time required in which format?? milliseconds??
     }
 
+    //Method to initialize the distances
     public static void initDistances(ArrayList<Vector> initialPoints)
     {
         distancesMatrix = new Double[initialPoints.size()][initialPoints.size()];
@@ -80,6 +83,7 @@ public class G018HW2 {
         }
     }
 
+    //Method that computes the seqweightedoutliers
     public static  ArrayList<Vector> SeqWeightedOutliers(ArrayList<Vector> P, ArrayList<Long> W, int k, int z, int alpha )
     {
         ArrayList<Vector> S = null;
@@ -88,7 +92,7 @@ public class G018HW2 {
         long max = 0L;
         Vector new_center = null;
         int guess = 1;
-        double r = minDistance(P,k+z+1)/2;
+        double r = minDistance(k+z+1)/2;
 
         while (true)
         {
@@ -97,10 +101,9 @@ public class G018HW2 {
             P.toArray(Z);
 
             Wz = 0L;
-            for (Long element: W) //Wz = sun x \in P (w(x))
+            for (Long element: W)
                 Wz += element;
 
-            //Wz += W.size();
 
             while ((S.size() < k) && (Wz > 0))
             {
@@ -113,8 +116,6 @@ public class G018HW2 {
 
                     for (Integer y : vector1)
                        ball_weigth += W.get(y);
-
-                    //ball_weigth += vector1.size();
 
                     if(ball_weigth > max)
                     {
@@ -145,7 +146,8 @@ public class G018HW2 {
         }
     }
 
-    private static double minDistance(ArrayList<Vector> points, long numberOfPoints )
+    //Computes the distance that is the minimum among the first numberOfPoints distances
+    private static double minDistance(int numberOfPoints )
     {
         Double min = Double.MAX_VALUE;
         for (int i =0; i<numberOfPoints; i++)
@@ -160,6 +162,7 @@ public class G018HW2 {
         return min;
     }
 
+    //This function returns the indices of the elements of P that must be put inside Bz
     private static ArrayList<Integer> Bz(ArrayList<Vector> P,Vector[] Z ,Vector x, double r)
     {
         ArrayList<Integer> Bz = new ArrayList<>();
@@ -169,6 +172,8 @@ public class G018HW2 {
                 Bz.add(i);
         return Bz;
     }
+
+
     //Compute objective function given the set of points P, the set of center points S
     //and the number of outliers points z
     public static double ComputeObjective(ArrayList<Vector> P, ArrayList<Vector> S, int z)
