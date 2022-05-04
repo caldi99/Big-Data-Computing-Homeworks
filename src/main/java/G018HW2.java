@@ -169,10 +169,12 @@ public class G018HW2 {
                 Bz.add(i);
         return Bz;
     }
-
+    //Compute objective function given the set of points P, the set of center points S
+    //and the number of outliers points z
     public static double ComputeObjective(ArrayList<Vector> P, ArrayList<Vector> S, int z)
     {
         double[] distances = new double[P.size()];
+        //Compute, for every point, the distance from his center
         for(int i = 0; i < distances.length; i++){
             distances[i] = computeDistance(P.get(i),S);
         }
@@ -182,13 +184,14 @@ public class G018HW2 {
 
     private static double computeDistance(Vector point, ArrayList<Vector> S){
 
-        double min_distance = -1;
+        //Initialize min distance as distance between point and first center point
+        double min_distance = Math.sqrt(Vectors.sqdist(point, S.get(0)));;
         double actual_distance = 0;
 
         for(Vector center : S){
             actual_distance = Math.sqrt(Vectors.sqdist(point, center));
 
-            if(actual_distance < min_distance || min_distance == -1){
+            if(actual_distance < min_distance){
                 min_distance = actual_distance;
             }
         }
