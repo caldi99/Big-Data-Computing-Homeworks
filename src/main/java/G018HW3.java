@@ -129,9 +129,24 @@ public class G018HW3
         //
         // ****** ADD YOUR CODE
         // ****** Compute the final solution (run SeqWeightedOutliers with alpha=2)
-	// ****** Measure and print times taken by Round 1 and Round 2, separately
-	// ****** Return the final solution
-        // 
+	    // ****** Measure and print times taken by Round 1 and Round 2, separately
+	    // ****** Return the final solution
+        //
+        ArrayList<Vector> P = new ArrayList<>((k+z)*L);
+        ArrayList<Long> W = new ArrayList<>((k+z)*L);
+
+        for (Tuple2<Vector,Long> elem: elems)
+        {
+            P.add(elem._1());
+            W.add(elem._2());
+        }
+
+        initDistances(P);
+        ArrayList<Vector> centers = SeqWeightedOutliers(P,W,k,z,2);
+
+        Double objective = computeObjective(points,centers,z);
+
+
   }
 
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -203,23 +218,149 @@ public class G018HW3
 // Method SeqWeightedOutliers: sequential k-center with outliers
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
-    //
-    // ****** ADD THE CODE FOR SeqWeightedOuliers from HW2
-    // 
+    static Double[][] distancesMatrix = null;
+
+    //Method that computes the seqweightedoutliers
+    public static  ArrayList<Vector> SeqWeightedOutliers(ArrayList<Vector> P, ArrayList<Long> W, int k, int z, int alpha )
+    {
+        ArrayList<Vector> S = null;
+        Vector[] Z = null;
+        Long Wz = 0L;
+        long max = 0L;
+        Vector new_center = null;
+        int guess = 1;
+        double r = minDistance(k+z+1)/2;
+
+        while (true)
+        {
+            S = new ArrayList<>();
+            Z = new Vector[P.size()];
+            P.toArray(Z);
+
+            Wz = 0L;
+            for (Long element: W)
+                Wz += element;
+
+
+            while ((S.size() < k) && (Wz > 0))
+            {
+                max = 0L;
+                new_center = null;
+                for (Vector x: P)
+                {
+                    long ball_weigth = 0L;
+                    ArrayList<Integer> vector1 = Bz(P,Z,x,(1 + 2 * alpha)*r); //index of where it is in P
+
+                    for (Integer y : vector1)
+                        ball_weigth += W.get(y);
+
+                    if(ball_weigth > max)
+                    {
+                        max = ball_weigth;
+                        new_center = x;
+                    }
+                }
+                S.add(new_center);
+                ArrayList<Integer> vector = Bz(P,Z,new_center,(3+ 4 * alpha) * r);
+
+                for (Integer index: vector)
+                {
+                    Z[index] = null;
+                    Wz -= W.get(index);
+                }
+            }
+            if(Wz <= z)
+            {
+                System.out.println("Final guess = : "+r);
+                System.out.println("Number of guesses = "+guess);
+                return S;
+            }
+            else
+            {
+                r *= 2;
+                guess += 1;
+            }
+        }
+    }
+
+    //Computes the distance that is the minimum among the first numberOfPoints distances
+    private static double minDistance(int numberOfPoints )
+    {
+        Double min = Double.MAX_VALUE;
+        for (int i =0; i<numberOfPoints; i++)
+        {
+            for (int j =i+1; j<numberOfPoints; j++)
+            {
+                Double val = distancesMatrix[i][j];
+                if(val < min)
+                    min = val;
+            }
+        }
+        return min;
+    }
+
+    //This function returns the indices of the elements of P that must be put inside Bz
+    private static ArrayList<Integer> Bz(ArrayList<Vector> P,Vector[] Z ,Vector x, double r)
+    {
+        ArrayList<Integer> Bz = new ArrayList<>();
+        int indexX = P.indexOf(x);
+        for(int i=0; i< Z.length; i++)
+            if((distancesMatrix[indexX][i] <= r) && (Z[i] != null))
+                Bz.add(i);
+        return Bz;
+    }
+
+    //Method to initialize the distances
+    public static void initDistances(ArrayList<Vector> initialPoints)
+    {
+        distancesMatrix = new Double[initialPoints.size()][initialPoints.size()];
+        for(int i=0; i<initialPoints.size(); i++)
+        {
+            distancesMatrix[i][i]= 0.0;
+            for(int j=i+1; j< initialPoints.size(); j++)
+            {
+                double d = Math.sqrt(Vectors.sqdist(initialPoints.get(i),initialPoints.get(j)));
+                distancesMatrix[i][j] = d;
+                distancesMatrix[j][i] = d;
+            }
+        }
+    }
 
       
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 // Method computeObjective: computes objective function  
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
-  public static double computeObjective (JavaRDD<Vector> points, ArrayList<Vector> centers, int z)
-  {
+    public static double computeObjective (JavaRDD<Vector> points, ArrayList<Vector> centers, int z)
+    {
 
-    //
-    // ****** ADD THE CODE FOR computeObjective
-    // 
+        //
+        // ****** ADD THE CODE FOR computeObjective
+        //
+        points.map(point ->{
 
-      
-  }
+            ArrayList<Double> distances = new ArrayList<>();
+            for (Vector center:centers)
+            {
+                distances.add(euclidean(point,center));
+            }
+            return distances.iterator();
+
+        }).sortBy(distances -> distances,false,0)
+                .map(distances ->{
+                    int i=0;
+                    while(distances.hasNext() && i< z)
+                    {
+                        distances.remove();
+                    }
+                    return distances;
+
+                }).map(distances->{
+                    //code for finding max
+
+                });
+        ;
+
+    }
 
 }
