@@ -51,7 +51,7 @@ public class G018HW3 {
         long N = inputPoints.count();
         end = System.currentTimeMillis();
 
-        // ----- Pring input parameters
+        // ----- Print input parameters
         System.out.println("File : " + filename);
         System.out.println("Number of points N = " + N);
         System.out.println("Number of centers k = " + k);
@@ -104,8 +104,10 @@ public class G018HW3 {
 
     public static ArrayList<Vector> MR_kCenterOutliers(JavaRDD<Vector> points, int k, int z, int L) {
 
+        long start,end;
         //------------- ROUND 1 ---------------------------
 
+        start=System.currentTimeMillis();
         JavaRDD<Tuple2<Vector, Long>> corset = points.mapPartitions(x ->
         {
             ArrayList<Vector> partition = new ArrayList<>();
@@ -123,26 +125,38 @@ public class G018HW3 {
         //------------- ROUND 2 ---------------------------
 
         ArrayList<Tuple2<Vector, Long>> elems = new ArrayList<>((k + z) * L);
+
+
         elems.addAll(corset.collect());
+        System.out.println(elems);
+        end = System.currentTimeMillis();
+        System.out.println("Round 1 time : "+(end-start));
+
         //
         // ****** ADD YOUR CODE
         // ****** Compute the final solution (run SeqWeightedOutliers with alpha=2)
         // ****** Measure and print times taken by Round 1 and Round 2, separately
         // ****** Return the final solution
         //
+
+
+
+        start = System.currentTimeMillis();
+
+
+
         ArrayList<Vector> P = new ArrayList<>((k + z) * L);
         ArrayList<Long> W = new ArrayList<>((k + z) * L);
-
         for (Tuple2<Vector, Long> elem : elems) {
+            System.out.println(elem._1());
+            System.out.println(elem._2());
             P.add(elem._1());
             W.add(elem._2());
         }
-
         initDistances(P);
         ArrayList<Vector> centers = SeqWeightedOutliers(P, W, k, z, 2);
-
-        Double objective = computeObjective(points, centers, z);
-
+        end = System.currentTimeMillis();
+        System.out.println("Round 2 time : "+(end-start));
         return centers;
 
     }
@@ -328,7 +342,7 @@ public class G018HW3 {
                     }
                     return distances;
                 })
-                .mapPartitions(Iterator::next).
-                first();
+                .mapPartitions(Iterator::next)
+                .collect().get(0);
     }
 }
