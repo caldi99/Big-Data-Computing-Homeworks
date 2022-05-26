@@ -136,12 +136,7 @@ public class G018HW3 {
         // ****** Return the final solution
         //
 
-
-
         start = System.currentTimeMillis();
-
-
-
         ArrayList<Vector> P = new ArrayList<>((k + z) * L);
         ArrayList<Long> W = new ArrayList<>((k + z) * L);
         for (Tuple2<Vector, Long> elem : elems) {
@@ -323,7 +318,6 @@ public class G018HW3 {
     public static double computeObjective(JavaRDD<Vector> points, ArrayList<Vector> centers, int z) {
         //
         // ****** ADD THE CODE FOR computeObjective
-        //
         //
         return points.mapToPair(point -> {
                     ArrayList<Double> distances = new ArrayList<>();
