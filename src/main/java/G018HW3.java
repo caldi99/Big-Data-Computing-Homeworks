@@ -9,10 +9,7 @@ import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 import scala.Tuple2;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class G018HW3 {
 
@@ -327,22 +324,14 @@ public class G018HW3 {
         //
         // ****** ADD THE CODE FOR computeObjective
         //
-        // point -> list of distances between point and center for each center
-        return points.map(point -> {
+        //
+        return points.mapToPair(point -> {
                     ArrayList<Double> distances = new ArrayList<>();
                     for (Vector center : centers) {
                         distances.add(euclidean(point, center));
                     }
-                    return distances.iterator();
-                }).sortBy(distances -> distances, false, 0)
-                .map(distances -> {
-                    int i = 0;
-                    while (distances.hasNext() && i < z) {
-                        distances.remove();
-                    }
-                    return distances;
-                })
-                .mapPartitions(Iterator::next)
-                .collect().get(0);
+                    distances.sort(Comparator.naturalOrder());
+                    return new Tuple2<>(distances.get(0),0);
+                }).sortByKey(false).collect().get(z)._1();
     }
 }
