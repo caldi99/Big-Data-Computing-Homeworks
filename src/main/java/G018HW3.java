@@ -101,10 +101,13 @@ public class G018HW3 {
 
     public static ArrayList<Vector> MR_kCenterOutliers(JavaRDD<Vector> points, int k, int z, int L) {
 
-        long start,end;
-        //------------- ROUND 1 ---------------------------
+        Long startRound1;
+        Long startRound2;
+        Long endRound1;
+        Long endRound2;
 
-        start=System.currentTimeMillis();
+        //------------- ROUND 1 ---------------------------
+        startRound1 = System.currentTimeMillis();
         JavaRDD<Tuple2<Vector, Long>> corset = points.mapPartitions(x ->
         {
             ArrayList<Vector> partition = new ArrayList<>();
@@ -120,14 +123,11 @@ public class G018HW3 {
         }); // END OF ROUND 1
 
         //------------- ROUND 2 ---------------------------
-
         ArrayList<Tuple2<Vector, Long>> elems = new ArrayList<>((k + z) * L);
-
-
         elems.addAll(corset.collect());
-        System.out.println(elems);
-        end = System.currentTimeMillis();
-        System.out.println("Round 1 time : "+(end-start));
+
+        endRound1 = System.currentTimeMillis();
+        System.out.println("Time Round 1 : "+(endRound1 - startRound1) + " ms");
 
         //
         // ****** ADD YOUR CODE
@@ -136,7 +136,7 @@ public class G018HW3 {
         // ****** Return the final solution
         //
 
-        start = System.currentTimeMillis();
+        startRound2 = System.currentTimeMillis();
         ArrayList<Vector> P = new ArrayList<>((k + z) * L);
         ArrayList<Long> W = new ArrayList<>((k + z) * L);
         for (Tuple2<Vector, Long> elem : elems) {
@@ -147,10 +147,9 @@ public class G018HW3 {
         }
         initDistances(P);
         ArrayList<Vector> centers = SeqWeightedOutliers(P, W, k, z, 2);
-        end = System.currentTimeMillis();
-        System.out.println("Round 2 time : "+(end-start));
+        endRound2 = System.currentTimeMillis();
+        System.out.println("Time Round 2 : "+(endRound2 - startRound2) + " ms");
         return centers;
-
     }
 
     // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -229,6 +228,7 @@ public class G018HW3 {
         Vector new_center = null;
         int guess = 1;
         double r = minDistance(k + z + 1) / 2;
+        System.out.println("Initial guess = "+r);
 
         while (true) {
             S = new ArrayList<>();
