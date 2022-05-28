@@ -317,7 +317,30 @@ public class G018HW3 {
         //
         // ****** ADD THE CODE FOR computeObjective
         //
-        return points.mapToPair(point -> {
+
+        return points.mapPartitions(partition ->{
+            ArrayList<Vector> part = new ArrayList<>();
+            ArrayList<Double> distances = new ArrayList<>();
+
+            while (partition.hasNext())
+                part.add(partition.next());
+
+            for (Vector current : part) {
+                double min = Double.MAX_VALUE;
+                for (Vector center : centers) {
+                    double distance = euclidean(current, center);
+                    if (distance < min)
+                        min = distance;
+                }
+                distances.add(min);
+            }
+            return distances.iterator();
+
+        }).top(z+1).get(z);
+
+
+        //OLDER VERSION
+        /*return points.mapToPair(point -> {
                     //find min
                     Double min = Double.MAX_VALUE;
                     for (Vector center : centers) {
@@ -341,6 +364,6 @@ public class G018HW3 {
                 })
                 .collect()
                 .get(0)
-                ._2();
+                ._2();*/
     }
 }
