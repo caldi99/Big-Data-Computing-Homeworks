@@ -140,8 +140,6 @@ public class G018HW3 {
         ArrayList<Vector> P = new ArrayList<>((k + z) * L);
         ArrayList<Long> W = new ArrayList<>((k + z) * L);
         for (Tuple2<Vector, Long> elem : elems) {
-            System.out.println(elem._1());
-            System.out.println(elem._2());
             P.add(elem._1());
             W.add(elem._2());
         }
@@ -320,12 +318,29 @@ public class G018HW3 {
         // ****** ADD THE CODE FOR computeObjective
         //
         return points.mapToPair(point -> {
-                    ArrayList<Double> distances = new ArrayList<>();
+                    //find min
+                    Double min = Double.MAX_VALUE;
                     for (Vector center : centers) {
-                        distances.add(euclidean(point, center));
+                        Double distance = euclidean(point, center);
+                        if(distance < min)
+                            min = distance;
                     }
-                    distances.sort(Comparator.naturalOrder());
-                    return new Tuple2<>(distances.get(0),0);
-                }).sortByKey(false).collect().get(z)._1();
+                    return new Tuple2<>(0,min);
+                })
+                .groupByKey()
+                .mapToPair(distances ->{
+                    PriorityQueue<Double> distancesHeap = new PriorityQueue<Double>(Collections.reverseOrder());
+                    for (Double aDouble : distances._2())
+                        distancesHeap.add(aDouble);
+                    for(int i=0; i < z; i++)
+                    {
+                        distancesHeap.remove();
+                    }
+                    return new Tuple2<>(0,distancesHeap.remove());
+
+                })
+                .collect()
+                .get(0)
+                ._2();
     }
 }
