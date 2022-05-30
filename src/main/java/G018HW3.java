@@ -337,33 +337,5 @@ public class G018HW3 {
             return distances.iterator();
 
         }).top(z+1).get(z);
-
-
-        //OLDER VERSION
-        /*return points.mapToPair(point -> {
-                    //find min
-                    Double min = Double.MAX_VALUE;
-                    for (Vector center : centers) {
-                        Double distance = euclidean(point, center);
-                        if(distance < min)
-                            min = distance;
-                    }
-                    return new Tuple2<>(0,min);
-                })
-                .groupByKey()
-                .mapToPair(distances ->{
-                    PriorityQueue<Double> distancesHeap = new PriorityQueue<Double>(Collections.reverseOrder());
-                    for (Double aDouble : distances._2())
-                        distancesHeap.add(aDouble);
-                    for(int i=0; i < z; i++)
-                    {
-                        distancesHeap.remove();
-                    }
-                    return new Tuple2<>(0,distancesHeap.remove());
-
-                })
-                .collect()
-                .get(0)
-                ._2();*/
     }
 }
