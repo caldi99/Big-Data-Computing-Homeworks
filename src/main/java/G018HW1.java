@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 
-public class G018
+public class G018HW1
 {
     /**
      Receive as input 3 parameters :
